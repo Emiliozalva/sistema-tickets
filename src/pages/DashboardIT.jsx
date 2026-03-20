@@ -9,6 +9,9 @@ export default function DashboardIT() {
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [filtroArea, setFiltroArea] = useState("Todas");
   const [cargando, setCargando] = useState(true);
+  
+  
+  const [ticketResolviendo, setTicketResolviendo] = useState(null);
 
   useEffect(() => {
     const q = query(collection(db, "tickets"), orderBy("fecha", "desc"), limit(100));
@@ -25,6 +28,19 @@ export default function DashboardIT() {
     catch (error) { console.error("Error al actualizar:", error); }
   };
 
+  const confirmarResolucion = async (id) => {
+    try {
+      await updateDoc(doc(db, "tickets", id), {
+        estado: "Completado",
+        resueltoPor: ticketResolviendo.resueltoPor,
+        observaciones: ticketResolviendo.observaciones
+      });
+      setTicketResolviendo(null); 
+    } catch (error) {
+      console.error("Error al finalizar ticket:", error);
+    }
+  };
+
   const eliminarTicket = async (id) => {
     if (window.confirm("¿Eliminar este ticket permanentemente?")) {
       await deleteDoc(doc(db, "tickets", id));
@@ -32,7 +48,7 @@ export default function DashboardIT() {
   };
 
   const eliminarTodosLosTickets = async () => {
-    const confirmacion = window.confirm("¿Estás seguro de que deseas eliminar TODOS los tickets? Esta acción no se puede deshacer.");
+    const confirmacion = window.confirm("¿Estás seguro de que deseas eliminar TODOS los tickets? Te sugerimos exportar un JSON primero como backup.");
     if (confirmacion) {
       try {
         const querySnapshot = await getDocs(collection(db, "tickets"));
@@ -46,13 +62,40 @@ export default function DashboardIT() {
     }
   };
 
+const exportarJSON = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "tickets"));
+      
+      
+      const todosLosTickets = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          fecha: data.fecha ? data.fecha.toDate().toLocaleString() : "Sin fecha" 
+        };
+      });
+      
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(todosLosTickets, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `Backup_Tickets_ASOEM_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    } catch (error) {
+      console.error("Error al generar JSON:", error);
+      alert("Hubo un error al generar el archivo de respaldo.");
+    }
+  };
+
   const generarPDF = (soloFiltrados = false) => {
     try {
       const docPDF = new jsPDF();
       const dataParaPdf = soloFiltrados ? ticketsFiltrados : tickets;
       const titulo = soloFiltrados && filtroArea !== "Todas" 
         ? `Reporte de Tickets - Área: ${filtroArea}` 
-        : "Reporte General de Tickets";
+        : "Reporte General de Tickets IT";
 
       docPDF.setFontSize(14);
       docPDF.text(titulo, 14, 15);
@@ -61,7 +104,7 @@ export default function DashboardIT() {
       docPDF.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
 
       const tableRows = dataParaPdf.map(t => [
-        t.codigo || t.id.slice(0,5).toUpperCase(), 
+        t.codigo || t.id.slice(0,5).toUpperCase(),
         t.fecha?.toDate().toLocaleDateString() || "N/A",
         t.area,
         t.asunto,
@@ -72,16 +115,13 @@ export default function DashboardIT() {
       ]);
 
       autoTable(docPDF, {
-        // SE AGREGA 'ID' COMO PRIMERA COLUMNA
-        head: [['ID', 'Fecha', 'Área', 'Asunto', 'Descripción', 'Técnico', 'Prioridad', 'Estado']],
+        head: [['ID', 'Fecha', 'Área', 'Asunto', 'Descripción', 'Destino', 'Prioridad', 'Estado']],
         body: tableRows,
         startY: 28,
         theme: 'grid',
         headStyles: { fillColor: [246, 224, 94], textColor: [0, 0, 0] },
         styles: { fontSize: 8 },
-        columnStyles: {
-          4: { cellWidth: 50 } 
-        }
+        columnStyles: { 4: { cellWidth: 50 } }
       });
 
       docPDF.save(`${titulo.replace(/ /g, "_")}.pdf`);
@@ -99,6 +139,7 @@ export default function DashboardIT() {
 
   return (
     <div className="space-y-6">
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-xl border border-gray-100 shadow-sm gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Panel de Administración IT</h2>
@@ -106,6 +147,10 @@ export default function DashboardIT() {
         </div>
         
         <div className="flex flex-wrap gap-2">
+          
+          <button onClick={exportarJSON} className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 transition-all shadow-sm">
+            Exportar JSON
+          </button>
           <button onClick={() => generarPDF(false)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all">
             PDF General
           </button>
@@ -144,7 +189,7 @@ export default function DashboardIT() {
         </div>
       </div>
 
-      {/* MATRIZ DE TICKETS (Tarjetas) */}
+      {/* MATRIZ DE TICKETS */}
       {cargando ? (
         <div className="p-10 text-center text-sm text-gray-400">Cargando base de datos...</div>
       ) : ticketsFiltrados.length === 0 ? (
@@ -156,9 +201,9 @@ export default function DashboardIT() {
               
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
-               <span className="text-xs font-bold text-gray-400 uppercase">
-                 {t.area} • <span className="text-gray-600">#{t.codigo || t.id.slice(0,5).toUpperCase()}</span>
-                </span>
+                  <span className="text-xs font-bold text-gray-400 uppercase">
+                    {t.area} • <span className="text-gray-600">#{t.codigo || t.id.slice(0,5).toUpperCase()}</span>
+                  </span>
                   <p className="text-sm font-bold text-gray-900 mt-0.5">{t.asunto}</p>
                 </div>
                 <button onClick={() => eliminarTicket(t.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
@@ -169,9 +214,20 @@ export default function DashboardIT() {
               <div className="p-4 flex-grow">
                 <div className="flex gap-2 mb-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${t.caracter === 'Urgente' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>{t.caracter}</span>
-                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-medium">Técnico: {t.dirigidoA}</span>
+                  <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-medium">Asignado a: {t.dirigidoA}</span>
                 </div>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{t.descripcion}</p>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap mb-4">{t.descripcion}</p>
+                
+                {t.estado === "Completado" && (
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                    <p className="text-xs text-green-800 font-medium">
+                      <span className="font-bold">Resuelto por:</span> {t.resueltoPor || "No especificado"}
+                    </p>
+                    {t.observaciones && (
+                      <p className="text-xs text-green-700 mt-1 italic">"{t.observaciones}"</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
@@ -184,18 +240,56 @@ export default function DashboardIT() {
                   }`}>{t.estado}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 mt-2">
+               
+                <div className="mt-2">
                   {t.estado === "Pendiente" && (
-                    <button onClick={() => cambiarEstado(t.id, "En Progreso")} className="col-span-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors">EMPEZAR</button>
+                    <button onClick={() => cambiarEstado(t.id, "En Progreso")} className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors">EMPEZAR</button>
                   )}
-                  {t.estado === "En Progreso" && (
-                    <>
-                      <button onClick={() => cambiarEstado(t.id, "Pendiente")} className="py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded-lg text-xs font-bold transition-colors">PAUSAR</button>
-                      <button onClick={() => cambiarEstado(t.id, "Completado")} className="py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-bold transition-colors shadow-sm">FINALIZAR</button>
-                    </>
+                  
+                  {t.estado === "En Progreso" && (!ticketResolviendo || ticketResolviendo.id !== t.id) && (
+                    <button 
+                      onClick={() => setTicketResolviendo({ id: t.id, resueltoPor: "", observaciones: "" })} 
+                      className="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                    >
+                      FINALIZAR TICKET
+                    </button>
                   )}
+
+                  {t.estado === "En Progreso" && ticketResolviendo?.id === t.id && (
+                    <div className="flex flex-col gap-2 p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
+                      <select 
+                        value={ticketResolviendo.resueltoPor}
+                        onChange={(e) => setTicketResolviendo({...ticketResolviendo, resueltoPor: e.target.value})}
+                        className="p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="" disabled>Resuelto por...</option>
+                        <option value="Ruben">Ruben</option>
+                        <option value="Diego">Diego</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Emilio">Emilio</option>
+                      </select>
+                      
+                      <textarea 
+                        placeholder="Observaciones de la resolución..."
+                        value={ticketResolviendo.observaciones}
+                        onChange={(e) => setTicketResolviendo({...ticketResolviendo, observaciones: e.target.value})}
+                        className="p-2 border border-gray-300 rounded-lg text-xs outline-none focus:ring-1 focus:ring-green-500 resize-none"
+                        rows="2"
+                      />
+                      
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={() => setTicketResolviendo(null)} className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[10px] font-bold transition-colors">CANCELAR</button>
+                        <button 
+                          onClick={() => confirmarResolucion(t.id)} 
+                          disabled={!ticketResolviendo.resueltoPor}
+                          className="flex-1 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50"
+                        >CONFIRMAR</button>
+                      </div>
+                    </div>
+                  )}
+
                   {t.estado === "Completado" && (
-                     <button onClick={() => cambiarEstado(t.id, "En Progreso")} className="col-span-2 py-2 bg-white border border-orange-200 hover:bg-orange-50 text-orange-600 rounded-lg text-xs font-bold transition-colors">REABRIR TICKET</button>
+                     <button onClick={() => cambiarEstado(t.id, "En Progreso")} className="w-full py-2 bg-white border border-orange-200 hover:bg-orange-50 text-orange-600 rounded-lg text-xs font-bold transition-colors">REABRIR TICKET</button>
                   )}
                 </div>
               </div>

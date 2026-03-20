@@ -21,7 +21,6 @@ const handleSubmit = async (e) => {
     setEnviando(true);
     setMensaje("");
 
-    // 1. AÑADIDO: Generamos un código único tipo "TK-48291"
     const codigoTicket = "TK-" + Math.floor(10000 + Math.random() * 90000); 
 
     try {
@@ -33,17 +32,16 @@ const handleSubmit = async (e) => {
         descripcion,
         estado: "Pendiente",
         fecha: serverTimestamp(),
-        codigo: codigoTicket // 2. AÑADIDO: Guardamos el código en Firebase
+        codigo: codigoTicket 
       });
 
-      // 3. MODIFICADO: Le mostramos el código al usuario
       setMensaje(`¡Ticket enviado! Tu número de seguimiento es: ${codigoTicket}`); 
       
       setAsunto("");
       setDescripcion("");
       setDirigidoA("");
       setCaracter("Normal");
-      setTimeout(() => setMensaje(""), 5000); // Le damos 5 segundos para que llegue a leerlo
+      setTimeout(() => setMensaje(""), 5000); 
 
     } catch (error) {
       console.error("Error al enviar el ticket:", error);
@@ -73,10 +71,9 @@ const handleSubmit = async (e) => {
                 className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amarillo-vivo outline-none"
                 required
               >
-                <option value="" disabled>Seleccionar destinatario...</option>
-                <option value="Ruben">Ruben</option>
-                <option value="Mariano">Mariano</option>
-                <option value="Diego">Diego</option>
+                <option value="" disabled>Seleccionar destino...</option>
+                <option value="Sistema">Sistema</option>
+                <option value="Soporte">Soporte</option>
               </select>
             </div>
 

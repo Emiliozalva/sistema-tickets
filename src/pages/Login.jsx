@@ -31,6 +31,14 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-amarillo-pastel flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 w-full max-w-sm text-center">
+        
+        {/* LOGO AGREGADO AQUÍ */}
+        <img 
+          src="/logoAsoem.png" 
+          alt="Logo ASOEM" 
+          className="w-32 mx-auto mb-4 object-contain" 
+        />
+
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Sistema de Tickets</h2>
         <p className="text-gray-500 text-sm mb-6">Ingresa con tu usuario asignado</p>
 

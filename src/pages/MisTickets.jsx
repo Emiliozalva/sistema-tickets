@@ -88,7 +88,7 @@ export default function MisTickets() {
               
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
-                  <span className="text-xs font-bold text-gray-400 uppercase">Destinatario: {ticket.dirigidoA}</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase">Destino: {ticket.dirigidoA}</span>
                   <h3 className="font-bold text-gray-800">
                   <span className="text-amarillo-vivo mr-2">#{ticket.codigo || ticket.id.slice(0,5).toUpperCase()}</span>
                    {ticket.asunto}
@@ -102,7 +102,18 @@ export default function MisTickets() {
                     {ticket.caracter}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{ticket.descripcion}</p>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap mb-4">{ticket.descripcion}</p>
+
+                {ticket.estado === "Completado" && (
+                  <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-100">
+                    <p className="text-xs text-green-800 font-medium">
+                      <span className="font-bold">Resuelto por:</span> {ticket.resueltoPor || "No especificado"}
+                    </p>
+                    {ticket.observaciones && (
+                      <p className="text-xs text-green-700 mt-1 italic">"{ticket.observaciones}"</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center mt-auto">

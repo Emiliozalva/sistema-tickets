@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         'amarillo-pastel': '#FFFDE7',
-        'amarillo-vivo': '#FFDB00',
+        'amarillo-vivo': '#ffe642',
         'amarillo-hover': '#FFEF8A',
       }
     },
