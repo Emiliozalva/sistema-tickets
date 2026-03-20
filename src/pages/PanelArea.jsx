@@ -16,10 +16,13 @@ export default function PanelArea() {
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setEnviando(true);
     setMensaje("");
+
+    // 1. AÑADIDO: Generamos un código único tipo "TK-48291"
+    const codigoTicket = "TK-" + Math.floor(10000 + Math.random() * 90000); 
 
     try {
       await addDoc(collection(db, "tickets"), {
@@ -30,14 +33,17 @@ export default function PanelArea() {
         descripcion,
         estado: "Pendiente",
         fecha: serverTimestamp(),
+        codigo: codigoTicket // 2. AÑADIDO: Guardamos el código en Firebase
       });
 
-      setMensaje("¡Ticket enviado correctamente a IT!");
+      // 3. MODIFICADO: Le mostramos el código al usuario
+      setMensaje(`¡Ticket enviado! Tu número de seguimiento es: ${codigoTicket}`); 
+      
       setAsunto("");
       setDescripcion("");
       setDirigidoA("");
       setCaracter("Normal");
-      setTimeout(() => setMensaje(""), 3000);
+      setTimeout(() => setMensaje(""), 5000); // Le damos 5 segundos para que llegue a leerlo
 
     } catch (error) {
       console.error("Error al enviar el ticket:", error);

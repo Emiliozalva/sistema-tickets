@@ -52,7 +52,7 @@ export default function DashboardIT() {
       const dataParaPdf = soloFiltrados ? ticketsFiltrados : tickets;
       const titulo = soloFiltrados && filtroArea !== "Todas" 
         ? `Reporte de Tickets - Área: ${filtroArea}` 
-        : "Reporte General de Tickets IT";
+        : "Reporte General de Tickets";
 
       docPDF.setFontSize(14);
       docPDF.text(titulo, 14, 15);
@@ -61,6 +61,7 @@ export default function DashboardIT() {
       docPDF.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
 
       const tableRows = dataParaPdf.map(t => [
+        t.codigo || t.id.slice(0,5).toUpperCase(), 
         t.fecha?.toDate().toLocaleDateString() || "N/A",
         t.area,
         t.asunto,
@@ -71,14 +72,15 @@ export default function DashboardIT() {
       ]);
 
       autoTable(docPDF, {
-        head: [['Fecha', 'Área', 'Asunto', 'Descripción', 'Técnico', 'Prioridad', 'Estado']],
+        // SE AGREGA 'ID' COMO PRIMERA COLUMNA
+        head: [['ID', 'Fecha', 'Área', 'Asunto', 'Descripción', 'Técnico', 'Prioridad', 'Estado']],
         body: tableRows,
         startY: 28,
         theme: 'grid',
         headStyles: { fillColor: [246, 224, 94], textColor: [0, 0, 0] },
         styles: { fontSize: 8 },
         columnStyles: {
-          3: { cellWidth: 50 } 
+          4: { cellWidth: 50 } 
         }
       });
 
@@ -105,10 +107,10 @@ export default function DashboardIT() {
         
         <div className="flex flex-wrap gap-2">
           <button onClick={() => generarPDF(false)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all">
-            📄 PDF General
+            PDF General
           </button>
           <button onClick={() => generarPDF(true)} className="px-4 py-2 bg-amarillo-vivo text-gray-900 rounded-lg text-sm font-medium hover:bg-amarillo-hover transition-all shadow-sm">
-            🎯 PDF Filtrado
+            PDF Filtrado
           </button>
           <button onClick={eliminarTodosLosTickets} className="px-4 py-2 bg-white border border-red-100 text-red-500 rounded-lg text-sm font-medium hover:bg-red-50 transition-all">
             Vaciar Todo
@@ -154,7 +156,9 @@ export default function DashboardIT() {
               
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
-                  <span className="text-xs font-bold text-gray-400 uppercase">{t.area}</span>
+               <span className="text-xs font-bold text-gray-400 uppercase">
+                 {t.area} • <span className="text-gray-600">#{t.codigo || t.id.slice(0,5).toUpperCase()}</span>
+                </span>
                   <p className="text-sm font-bold text-gray-900 mt-0.5">{t.asunto}</p>
                 </div>
                 <button onClick={() => eliminarTicket(t.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">

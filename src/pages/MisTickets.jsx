@@ -89,7 +89,10 @@ export default function MisTickets() {
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
                   <span className="text-xs font-bold text-gray-400 uppercase">Destinatario: {ticket.dirigidoA}</span>
-                  <h3 className="text-sm font-bold text-gray-900 mt-0.5">{ticket.asunto}</h3>
+                  <h3 className="font-bold text-gray-800">
+                  <span className="text-amarillo-vivo mr-2">#{ticket.codigo || ticket.id.slice(0,5).toUpperCase()}</span>
+                   {ticket.asunto}
+                  </h3>
                 </div>
               </div>
 
