@@ -142,8 +142,8 @@ const exportarJSON = async () => {
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-xl border border-gray-100 shadow-sm gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Panel de Administración IT</h2>
-          <p className="text-gray-500 text-sm">Gestión central de soporte</p>
+          <h2 className="text-xl font-bold text-gray-900">Panel Informática</h2>
+          <p className="text-gray-500 text-sm">Gestión de tickets recibidos: ({tickets.length})</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ const exportarJSON = async () => {
       {/* FILTROS */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Área</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Area</label>
           <select value={filtroArea} onChange={(e) => setFiltroArea(e.target.value)} className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-amarillo-vivo text-sm">
             {areasDisponibles.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
