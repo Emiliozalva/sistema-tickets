@@ -32,7 +32,7 @@ export default function Login() {
     <div className="min-h-screen bg-amarillo-pastel flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 w-full max-w-sm text-center">
         
-        {/* LOGO AGREGADO AQUÍ */}
+        
         <img 
           src="/logoAsoem.png" 
           alt="Logo ASOEM" 
@@ -45,7 +45,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Área (ej: finanzas)"
+            placeholder="Area (ej: finanzas)"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-amarillo-vivo transition-all text-sm"
