@@ -10,7 +10,6 @@ export default function DashboardIT() {
   const [filtroArea, setFiltroArea] = useState("Todas");
   const [cargando, setCargando] = useState(true);
   
-  
   const [ticketResolviendo, setTicketResolviendo] = useState(null);
 
   useEffect(() => {
@@ -62,16 +61,18 @@ export default function DashboardIT() {
     }
   };
 
-const exportarJSON = async () => {
+ const exportarJSON = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "tickets"));
       
-      
       const todosLosTickets = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        // Separamos la url de la imagen del resto de los datos para no exportarla
+        const { _imagenUrl, ...datosSinImagen } = data; 
+        
         return {
           id: doc.id,
-          ...data,
+          ...datosSinImagen,
           fecha: data.fecha ? data.fecha.toDate().toLocaleString() : "Sin fecha" 
         };
       });
@@ -91,7 +92,7 @@ const exportarJSON = async () => {
 
   const generarPDF = (soloFiltrados = false) => {
     try {
-      const docPDF = new jsPDF();
+      const docPDF = new jsPDF("landscape"); // Lo ponemos apaisado para que entren más columnas
       const dataParaPdf = soloFiltrados ? ticketsFiltrados : tickets;
       const titulo = soloFiltrados && filtroArea !== "Todas" 
         ? `Reporte de Tickets - Área: ${filtroArea}` 
@@ -103,25 +104,24 @@ const exportarJSON = async () => {
       docPDF.setTextColor(100);
       docPDF.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
 
+      // Agregamos empleado y validacion al mapeo
       const tableRows = dataParaPdf.map(t => [
         t.codigo || t.id.slice(0,5).toUpperCase(),
         t.fecha?.toDate().toLocaleDateString() || "N/A",
         t.area,
+        t.empleado || "Usuario General",
         t.asunto,
-        t.descripcion || "Sin descripción",
-        t.dirigidoA,
-        t.caracter,
-        t.estado
+        t.estado,
+        t.validacion || "Pendiente"
       ]);
 
       autoTable(docPDF, {
-        head: [['ID', 'Fecha', 'Área', 'Asunto', 'Descripción', 'Destino', 'Prioridad', 'Estado']],
+        head: [['ID', 'Fecha', 'Área', 'Empleado', 'Asunto', 'Estado', 'Validación']],
         body: tableRows,
         startY: 28,
         theme: 'grid',
         headStyles: { fillColor: [246, 224, 94], textColor: [0, 0, 0] },
-        styles: { fontSize: 8 },
-        columnStyles: { 4: { cellWidth: 50 } }
+        styles: { fontSize: 8 }
       });
 
       docPDF.save(`${titulo.replace(/ /g, "_")}.pdf`);
@@ -130,7 +130,6 @@ const exportarJSON = async () => {
       alert("Hubo un error al generar el PDF.");
     }
   };
-
   const areasDisponibles = ["Todas", ...new Set(tickets.map(t => t.area))];
   const ticketsFiltrados = tickets.filter(t => 
     (filtroEstado === "Todos" || t.estado === filtroEstado) &&
@@ -147,7 +146,6 @@ const exportarJSON = async () => {
         </div>
         
         <div className="flex flex-wrap gap-2">
-          
           <button onClick={exportarJSON} className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 transition-all shadow-sm">
             Exportar JSON
           </button>
@@ -201,12 +199,26 @@ const exportarJSON = async () => {
               
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
-                  <span className="text-xs font-bold text-gray-400 uppercase">
-                    {t.area} • <span className="text-gray-600">#{t.codigo || t.id.slice(0,5).toUpperCase()}</span>
-                  </span>
-                  <p className="text-sm font-bold text-gray-900 mt-0.5">{t.asunto}</p>
+                  {/* NUEVO: Etiquetas de información superior */}
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-xs font-bold text-gray-400 uppercase">{t.area}</span>
+                    {t.empleado && (
+                      <span className="text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{t.empleado}</span>
+                    )}
+                    {t.validacion === "En Revisión" && (
+                      <span className="text-[10px] bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">Requiere Revisión</span>
+                    )}
+                    {t.validacion === "Confirmado" && (
+                      <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">Confirmado</span>
+                    )}
+                  </div>
+                  
+                  <h3 className="font-bold text-gray-800 text-lg leading-tight mt-1">
+                    <span className="text-amarillo-vivo mr-2">#{t.codigo || t.id.slice(0,5).toUpperCase()}</span>
+                    {t.asunto}
+                  </h3>
                 </div>
-                <button onClick={() => eliminarTicket(t.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                <button onClick={() => eliminarTicket(t.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1 ml-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </div>
@@ -216,7 +228,21 @@ const exportarJSON = async () => {
                   <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${t.caracter === 'Urgente' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>{t.caracter}</span>
                   <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md font-medium">Asignado a: {t.dirigidoA}</span>
                 </div>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap mb-4">{t.descripcion}</p>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">{t.descripcion}</p>
+                
+                {/* NUEVO: Botón para abrir la imagen */}
+                {t.imagenUrl && (
+                  <div className="mt-4">
+                    <a 
+                      href={t.imagenUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      Ver imagen adjunta
+                    </a>
+                  </div>
+                )}
                 
                 {t.estado === "Completado" && (
                   <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
@@ -230,7 +256,7 @@ const exportarJSON = async () => {
                 )}
               </div>
 
-              <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col gap-3 mt-auto">
                 <div className="flex justify-between items-center text-[10px] text-gray-400 font-medium">
                   <span>{t.fecha?.toDate().toLocaleString()}</span>
                   <span className={`px-2 py-1 rounded-md uppercase font-bold ${
@@ -240,7 +266,6 @@ const exportarJSON = async () => {
                   }`}>{t.estado}</span>
                 </div>
 
-               
                 <div className="mt-2">
                   {t.estado === "Pendiente" && (
                     <button onClick={() => cambiarEstado(t.id, "En Progreso")} className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors">EMPEZAR</button>

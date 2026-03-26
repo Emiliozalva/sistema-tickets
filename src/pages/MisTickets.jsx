@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../config/firebase";
-import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 export default function MisTickets() {
   const { user } = useAuth();
@@ -42,7 +42,29 @@ export default function MisTickets() {
 
     return () => unsubscribe();
   }, [areaUsuario]);
+  const handleConfirmar = async (ticketId) => {
+    if (window.confirm("¿Confirmas que el problema está solucionado?")) {
+      await updateDoc(doc(db, "tickets", ticketId), {
+        validacion: "Confirmado",
+        estado: "Cerrado" 
+      });
+    }
+  };
 
+  const handleRevisar = async (ticketId, asuntoActual) => {
+    if (window.confirm("¿Deseas enviar este ticket a revisión? Informática será notificada.")) {
+
+      const nuevoAsunto = asuntoActual.includes("(revisar)") 
+        ? asuntoActual 
+        : `${asuntoActual} (revisar)`;
+
+      await updateDoc(doc(db, "tickets", ticketId), {
+        asunto: nuevoAsunto,
+        estado: "Pendiente", 
+        validacion: "En Revisión"
+      });
+    }
+  };
   const getColorEstado = (estado) => {
     switch (estado) {
       case 'Pendiente': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -104,13 +126,22 @@ export default function MisTickets() {
                 </div>
                 <p className="text-sm text-gray-600 whitespace-pre-wrap mb-4">{ticket.descripcion}</p>
 
+                {/* DATOS DE RESOLUCIÓN */}
                 {ticket.estado === "Completado" && (
                   <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-100">
-                    <p className="text-xs text-green-800 font-medium">
-                      <span className="font-bold">Resuelto por:</span> {ticket.resueltoPor || "No especificado"}
-                    </p>
-                    {ticket.observaciones && (
-                      <p className="text-xs text-green-700 mt-1 italic">"{ticket.observaciones}"</p>
+                    <p className="text-xs text-green-800 font-medium"><span className="font-bold">Resuelto por:</span> {ticket.resueltoPor || "No especificado"}</p>
+                    {ticket.observaciones && <p className="text-xs text-green-700 mt-1 italic">"{ticket.observaciones}"</p>}
+                    
+                    
+                    {ticket.validacion !== "Confirmado" && (
+                      <div className="mt-3 flex gap-2 pt-3 border-t border-green-200/50">
+                        <button onClick={() => handleConfirmar(ticket.id)} className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded shadow-sm transition-colors">
+                          Confirmar solución
+                        </button>
+                        <button onClick={() => handleRevisar(ticket.id, ticket.asunto)} className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-bold py-2 px-3 rounded shadow-sm transition-colors">
+                          Revisar de nuevo
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
