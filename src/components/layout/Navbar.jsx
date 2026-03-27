@@ -3,7 +3,14 @@ import logoImg from "../../assets/logoAsoem.png";
 
 export default function Navbar() {
   const { user } = useAuth();
-  const areaUsuario = user?.email?.split('@')[0]?.toUpperCase() || "ÁREA";
+  
+  
+  const areaGuardada = localStorage.getItem("areaUsuarioSSO");
+  
+  
+  const areaUsuario = areaGuardada 
+    ? areaGuardada.toUpperCase() 
+    : user?.email?.split('@')[0]?.toUpperCase() || "ÁREA";
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-amarillo-vivo shadow-md z-50 flex items-center justify-between px-4 md:px-6">

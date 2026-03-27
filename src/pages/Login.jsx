@@ -39,6 +39,7 @@ export default function Login() {
       if (dataUsuario.nombre) {
         localStorage.setItem("nombreUsuarioSSO", dataUsuario.nombre);
       }
+      localStorage.setItem("areaUsuarioSSO", dataUsuario.area);
 
       const areaFormateada = dataUsuario.area
         .toLowerCase()
@@ -68,6 +69,8 @@ export default function Login() {
     setError("");
 
     try {
+      localStorage.setItem("areaUsuarioSSO", username);
+
       const areaFormateada = username.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
       const emailFicticio = `${areaFormateada}@tickets.local`;
       
