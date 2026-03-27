@@ -4,7 +4,8 @@ import { useAuth } from "../../context/AuthContext";
 export default function SidebarArea() {
   const { user } = useAuth();
   
-  const esAdmin = user?.email === "informatica@tickets.local";
+
+  const esAdmin = user?.email?.includes("informatica");
 
   const linkClass = ({ isActive }) => 
     `flex flex-col md:flex-row items-center gap-1 md:gap-3 p-2 md:px-4 md:py-3 rounded-lg text-xs md:text-sm transition-colors duration-200 
