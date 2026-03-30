@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "../config/firebase";
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDocs, writeBatch, limit } from "firebase/firestore";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export default function DashboardIT() {
   const [tickets, setTickets] = useState([]);
@@ -61,19 +59,21 @@ export default function DashboardIT() {
     }
   };
 
- const exportarJSON = async () => {
+  const exportarJSON = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "tickets"));
       
       const todosLosTickets = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        // Separamos la url de la imagen del resto de los datos para no exportarla
-        const { _imagenUrl, ...datosSinImagen } = data; 
+        const datosAExportar = { ...doc.data() };
+        
+        // Limpiamos los campos de imágenes para no exportar la URL
+        delete datosAExportar.imagenUrl; // Por si hay tickets viejos
+        delete datosAExportar.imagenesUrls; // Para los tickets nuevos
         
         return {
           id: doc.id,
-          ...datosSinImagen,
-          fecha: data.fecha ? data.fecha.toDate().toLocaleString() : "Sin fecha" 
+          ...datosAExportar,
+          fecha: datosAExportar.fecha ? datosAExportar.fecha.toDate().toLocaleString() : "Sin fecha" 
         };
       });
       
@@ -90,9 +90,12 @@ export default function DashboardIT() {
     }
   };
 
-  const generarPDF = (soloFiltrados = false) => {
+  const generarPDF = async (soloFiltrados = false) => {
     try {
-      const docPDF = new jsPDF("landscape"); // Lo ponemos apaisado para que entren más columnas
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+
+      const docPDF = new jsPDF("landscape"); 
       const dataParaPdf = soloFiltrados ? ticketsFiltrados : tickets;
       const titulo = soloFiltrados && filtroArea !== "Todas" 
         ? `Reporte de Tickets - Área: ${filtroArea}` 
@@ -104,7 +107,6 @@ export default function DashboardIT() {
       docPDF.setTextColor(100);
       docPDF.text(`Generado el: ${new Date().toLocaleString()}`, 14, 22);
 
-      // Agregamos empleado y validacion al mapeo
       const tableRows = dataParaPdf.map(t => [
         t.codigo || t.id.slice(0,5).toUpperCase(),
         t.fecha?.toDate().toLocaleDateString() || "N/A",
@@ -130,6 +132,7 @@ export default function DashboardIT() {
       alert("Hubo un error al generar el PDF.");
     }
   };
+
   const areasDisponibles = ["Todas", ...new Set(tickets.map(t => t.area))];
   const ticketsFiltrados = tickets.filter(t => 
     (filtroEstado === "Todos" || t.estado === filtroEstado) &&
@@ -161,7 +164,6 @@ export default function DashboardIT() {
         </div>
       </div>
 
-      {/* FILTROS */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Area</label>
@@ -187,7 +189,6 @@ export default function DashboardIT() {
         </div>
       </div>
 
-      {/* MATRIZ DE TICKETS */}
       {cargando ? (
         <div className="p-10 text-center text-sm text-gray-400">Cargando base de datos...</div>
       ) : ticketsFiltrados.length === 0 ? (
@@ -199,7 +200,7 @@ export default function DashboardIT() {
               
               <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-start">
                 <div>
-                  {/* NUEVO: Etiquetas de información superior */}
+                  
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-xs font-bold text-gray-400 uppercase">{t.area}</span>
                     {t.empleado && (
@@ -230,17 +231,22 @@ export default function DashboardIT() {
                 </div>
                 <p className="text-sm text-gray-600 whitespace-pre-wrap">{t.descripcion}</p>
                 
-                {/* NUEVO: Botón para abrir la imagen */}
-                {t.imagenUrl && (
-                  <div className="mt-4">
-                    <a 
-                      href={t.imagenUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
-                    >
-                      Ver imagen adjunta
-                    </a>
+                {/* LÓGICA DE IMÁGENES ACTUALIZADA */}
+                {(t.imagenUrl || (t.imagenesUrls && t.imagenesUrls.length > 0)) && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {/* Soporte para tickets viejos (1 imagen) */}
+                    {t.imagenUrl && (
+                      <a href={t.imagenUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                        Ver imagen adjunta
+                      </a>
+                    )}
+                    
+                    {/* Soporte para tickets nuevos (hasta 3 imágenes) */}
+                    {t.imagenesUrls && t.imagenesUrls.map((url, index) => (
+                      <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                        Ver imagen {index + 1}
+                      </a>
+                    ))}
                   </div>
                 )}
                 
