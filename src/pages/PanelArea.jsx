@@ -5,8 +5,10 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function PanelArea() {
   const { user } = useAuth();
-  const areaUsuario = user?.email?.split('@')[0]?.toUpperCase() || "ÁREA";
-
+  const areaGuardada = localStorage.getItem("areaUsuarioSSO");
+  const areaUsuario = areaGuardada 
+    ? areaGuardada.toUpperCase() 
+    : (user?.email?.split('@')[0]?.toUpperCase() || "ÁREA");
   const [dirigidoA, setDirigidoA] = useState("");
   const [caracter, setCaracter] = useState("Normal");
   const [asunto, setAsunto] = useState("");
