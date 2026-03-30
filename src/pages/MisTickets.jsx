@@ -5,7 +5,12 @@ import { doc, updateDoc, collection, query, where, orderBy, limit, onSnapshot } 
 
 export default function MisTickets() {
   const { user } = useAuth();
-  const areaUsuario = user?.email?.split('@')[0]?.toUpperCase() || "ÁREA";
+  
+  // 👉 EL ARREGLO ESTÁ ACÁ: Leemos el área bonita del localStorage
+  const areaGuardada = localStorage.getItem("areaUsuarioSSO");
+  const areaUsuario = areaGuardada 
+    ? areaGuardada.toUpperCase() 
+    : (user?.email?.split('@')[0]?.toUpperCase() || "ÁREA");
   
   const [tickets, setTickets] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -14,6 +19,7 @@ export default function MisTickets() {
   useEffect(() => {
     if (!areaUsuario) return;
 
+    // AHORA VA A BUSCAR: where("area", "==", "MESA DE ENTRADAS")
     const q = query(
       collection(db, "tickets"), 
       where("area", "==", areaUsuario),
