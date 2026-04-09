@@ -8,6 +8,8 @@ const Login = lazy(() => import("./pages/Login"));
 const PanelArea = lazy(() => import("./pages/PanelArea"));
 const MisTickets = lazy(() => import("./pages/MisTickets"));
 const DashboardIT = lazy(() => import("./pages/DashboardIT"));
+const IntraTickets = lazy(() => import("./pages/IntraTickets")); 
+
 const CargandoPantalla = () => (
   <div className="flex h-screen items-center justify-center bg-gray-50">
     <div className="text-gray-500 font-medium animate-pulse">Cargando módulo...</div>
@@ -32,6 +34,7 @@ function App() {
             >
               <Route path="panel" element={<PanelArea />} />
               <Route path="mis-tickets" element={<MisTickets />} />
+              <Route path="intra-tickets" element={<IntraTickets />} /> 
               <Route path="admin" element={<DashboardIT />} /> 
             </Route>
 
