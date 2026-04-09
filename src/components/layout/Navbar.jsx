@@ -22,7 +22,7 @@ export default function Navbar() {
 
       <div className="flex items-center gap-3">
         <div className="text-right flex items-center gap-2">
-          <p className="text-sm font-normal text-gray-600">Área:</p>
+          <p className="text-sm font-normal text-gray-600">Area:</p>
           <p className="text-sm font-medium text-gray-800 bg-white/50 border border-white/60 px-3 py-1 rounded-md shadow-sm">
             {areaUsuario}
           </p>

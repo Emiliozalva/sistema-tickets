@@ -29,15 +29,15 @@ export default function SidebarArea() {
           </NavLink>
         )}
 
-        <NavLink to="/panel" className={linkClass} end> 
-          <span className="hidden md:inline">Crear Ticket</span>
-          <span className="md:hidden mt-0.5">Crear Ticket</span>
-        </NavLink>
-
-        {/* NUEVO BOTÓN: Intra-Tickets */}
+        
         <NavLink to="/intra-tickets" className={linkClass}>
           <span className="hidden md:inline">Intra Tickets</span>
           <span className="md:hidden mt-0.5">Internos</span>
+        </NavLink>
+
+        <NavLink to="/panel" className={linkClass} end> 
+          <span className="hidden md:inline">Crear Ticket</span>
+          <span className="md:hidden mt-0.5">Crear Ticket</span>
         </NavLink>
 
         <NavLink to="/mis-tickets" className={linkClass}>
