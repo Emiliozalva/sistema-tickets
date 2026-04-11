@@ -48,6 +48,28 @@ export default function IntraTickets() {
     return () => unsubscribe();
   }, [areaUsuario, limite]);
 
+  useEffect(() => {
+    if (cargandoGrilla || window.parent === window) return;
+
+    const ticketsPendientes = ticketsInternos.filter(t => t.estado === "Pendiente");
+    window.parent.postMessage({
+      type: "ESTADO_TICKETS_PENDIENTES",
+      sistema: "TICKETS_ASOEM",
+      datos: {
+        area: areaUsuario,
+        cantidadPendientes: ticketsPendientes.length,
+        
+        detalle: ticketsPendientes.map(t => ({
+          id: t.id,
+          asunto: t.asunto,
+          creadoPor: t.empleado,
+          destinatario: t.destinatarioInterno,
+          prioridad: t.caracter
+        }))
+      }
+    }, "https://asoem.org.ar");
+
+  }, [ticketsInternos, cargandoGrilla, areaUsuario]);
   const handleCrear = async (e) => {
     e.preventDefault();
     setEnviando(true);

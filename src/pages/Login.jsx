@@ -49,7 +49,14 @@ export default function Login() {
       const emailFicticio = `${areaFormateada}@tickets.local`;
       const passwordAutomatica = `${areaFormateada}tickets314`;
 
-      await signInWithEmailAndPassword(auth, emailFicticio, passwordAutomatica);
+      
+      const tiempoMinimo = new Promise(resolve => setTimeout(resolve, 5000));
+      
+      
+      await Promise.all([
+        signInWithEmailAndPassword(auth, emailFicticio, passwordAutomatica),
+        tiempoMinimo
+      ]);
       
       if (emailFicticio.includes("informatica")) {
         navigate("/admin");
@@ -91,7 +98,12 @@ export default function Login() {
     return (
       <div className="min-h-screen bg-amarillo-pastel flex items-center justify-center p-4">
         <div className="text-center bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-sm w-full">
-          <img src="/logoAsoem.png" alt="Logo ASOEM" className="w-24 mx-auto mb-6 object-contain animate-pulse" />
+        
+          <img src="/logoAsoem.png" alt="Logo ASOEM" className="w-40 mx-auto mb-4 object-contain animate-pulse" />
+          
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-wide">SISTEMA DE TICKETS</h2>
+          
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amarillo-vivo mx-auto mb-4"></div>
           <p className="text-gray-700 font-medium text-sm">Conectando con la Oficina Virtual...</p>
         </div>

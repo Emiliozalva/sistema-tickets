@@ -31,7 +31,7 @@ export default function SidebarArea() {
 
         
         <NavLink to="/intra-tickets" className={linkClass}>
-          <span className="hidden md:inline">Intra Tickets</span>
+          <span className="hidden md:inline">IntraTickets</span>
           <span className="md:hidden mt-0.5">Internos</span>
         </NavLink>
 
